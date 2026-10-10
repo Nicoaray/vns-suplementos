@@ -376,8 +376,6 @@ avisarle eso o abrir el link un rato antes.
 
 **Nicolás Araya** — Técnico en Desarrollo de Software (Mendoza, Argentina)
 
-_Agregar acá: LinkedIn, GitHub y/o email de contacto._
-
 ## Licencia
 
 Este proyecto está bajo la licencia MIT — ver [LICENSE](LICENSE).
