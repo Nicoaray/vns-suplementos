@@ -1,0 +1,523 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>Panel admin — VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <h1>Panel de administración</h1>
+  <p class="subtitle">Productos, categorías, usuarios, pedidos y estadísticas.</p>
+
+  <div id="access-msg"></div>
+
+  <div id="admin-content" style="display:none;">
+    <div class="admin-tabs">
+      <button class="tab active" data-tab="resumen">Resumen</button>
+      <button class="tab" data-tab="productos">Productos</button>
+      <button class="tab" data-tab="categorias">Categorías</button>
+      <button class="tab" data-tab="usuarios">Usuarios</button>
+      <button class="tab" data-tab="pedidos">Pedidos</button>
+    </div>
+
+    <div id="msg"></div>
+
+    <!-- ===== RESUMEN ===== -->
+    <section class="admin-panel active" id="panel-resumen">
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <div class="section-head"><h2>Ventas por fecha</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fecha</th><th>Pedidos</th><th>Ingresos</th></tr></thead>
+          <tbody id="sales-by-date-body"></tbody>
+        </table>
+      </div>
+
+      <div class="section-head" style="margin-top:28px;"><h2>Productos más vendidos</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Producto</th><th>Unidades vendidas</th><th>Ingresos</th></tr></thead>
+          <tbody id="top-products-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== PRODUCTOS ===== -->
+    <section class="admin-panel" id="panel-productos">
+      <div class="admin-toolbar">
+        <h2 style="margin:0;">Productos</h2>
+        <button id="btn-new-product">+ Nuevo producto</button>
+      </div>
+
+      <form class="inline-form" id="product-form" style="display:none;">
+        <input type="hidden" id="product-id" />
+        <div><label>Nombre</label><input id="product-name" required /></div>
+        <div><label>Slug</label><input id="product-slug" required /></div>
+        <div><label>Categoría</label><select id="product-category" required></select></div>
+        <div><label>Precio</label><input id="product-price" type="number" min="0.01" step="0.01" required /></div>
+        <div><label>Descuento %</label><input id="product-discount" type="number" min="0" max="90" value="0" /></div>
+        <div><label>Stock</label><input id="product-stock" type="number" min="0" required /></div>
+        <div class="full-row"><label>Descripción</label><textarea id="product-description" rows="2"></textarea></div>
+        <div class="full-row" style="display:flex; gap:10px;">
+          <button type="submit" id="product-submit-btn">Crear producto</button>
+          <button type="button" class="secondary" id="product-cancel-btn">Cancelar</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Imagen</th><th></th></tr></thead>
+          <tbody id="products-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== CATEGORIAS ===== -->
+    <section class="admin-panel" id="panel-categorias">
+      <div class="admin-toolbar">
+        <h2 style="margin:0;">Categorías</h2>
+        <button id="btn-new-category">+ Nueva categoría</button>
+      </div>
+
+      <form class="inline-form" id="category-form" style="display:none;">
+        <input type="hidden" id="category-id" />
+        <div><label>Nombre</label><input id="category-name" required /></div>
+        <div><label>Slug</label><input id="category-slug" required /></div>
+        <div class="full-row"><label>Descripción</label><input id="category-description" /></div>
+        <div class="full-row" style="display:flex; gap:10px;">
+          <button type="submit" id="category-submit-btn">Crear categoría</button>
+          <button type="button" class="secondary" id="category-cancel-btn">Cancelar</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Slug</th><th>Descripción</th><th></th></tr></thead>
+          <tbody id="categories-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== USUARIOS ===== -->
+    <section class="admin-panel" id="panel-usuarios">
+      <h2>Usuarios</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Alta</th><th></th></tr></thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== PEDIDOS ===== -->
+    <section class="admin-panel" id="panel-pedidos">
+      <h2>Pedidos</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>VNS Suplementos — proyecto de práctica / plantilla de ecommerce.</footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("admin");
+
+  const msg = document.getElementById("msg");
+  const accessMsg = document.getElementById("access-msg");
+  const content = document.getElementById("admin-content");
+
+  function showMsg(text, type = "error") {
+    msg.innerHTML = text ? `<div class="msg ${type}">${text}</div>` : "";
+    if (text) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function money(n) {
+    return `$${Number(n).toLocaleString("es-AR", { minimumFractionDigits: 0 })}`;
+  }
+
+  let categories = [];
+  let me = null;
+
+  // --- Tabs ---
+  document.querySelectorAll(".admin-tabs .tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".admin-tabs .tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`panel-${btn.dataset.tab}`).classList.add("active");
+    });
+  });
+
+  // ================= RESUMEN =================
+  async function loadResumen() {
+    const summary = await Api.statsSummary();
+    const cards = [
+      { label: "Ingresos totales", value: money(summary.total_revenue) },
+      { label: "Pedidos totales", value: summary.total_orders },
+      { label: "Pendientes", value: summary.pending_orders },
+      { label: "Pagados", value: summary.paid_orders },
+      { label: "Enviados", value: summary.shipped_orders },
+      { label: "Cancelados", value: summary.cancelled_orders },
+      { label: "Clientes", value: summary.total_customers },
+      { label: "Productos activos", value: summary.active_products },
+      { label: "Poco stock", value: summary.low_stock_products, warn: summary.low_stock_products > 0 },
+    ];
+    document.getElementById("stat-grid").innerHTML = cards
+      .map(
+        (c) => `
+        <div class="stat-card ${c.warn ? "warn" : ""}">
+          <div class="stat-value">${c.value}</div>
+          <div class="stat-label">${c.label}</div>
+        </div>`
+      )
+      .join("");
+
+    const byDate = await Api.statsSalesByDate();
+    document.getElementById("sales-by-date-body").innerHTML = byDate.length
+      ? byDate.map((r) => `<tr><td>${r.day}</td><td>${r.orders_count}</td><td>${money(r.revenue)}</td></tr>`).join("")
+      : `<tr><td colspan="3">Todavía no hay ventas registradas.</td></tr>`;
+
+    const top = await Api.statsTopProducts(10);
+    document.getElementById("top-products-body").innerHTML = top.length
+      ? top.map((r) => `<tr><td>${r.name}</td><td>${r.quantity_sold}</td><td>${money(r.revenue)}</td></tr>`).join("")
+      : `<tr><td colspan="3">Todavía no hay ventas registradas.</td></tr>`;
+  }
+
+  // ================= PRODUCTOS =================
+  const productForm = document.getElementById("product-form");
+  const productIdField = document.getElementById("product-id");
+  const productSubmitBtn = document.getElementById("product-submit-btn");
+
+  function fillCategorySelect() {
+    const sel = document.getElementById("product-category");
+    sel.innerHTML = categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+  }
+
+  function resetProductForm() {
+    productForm.reset();
+    productIdField.value = "";
+    productSubmitBtn.textContent = "Crear producto";
+    productForm.style.display = "none";
+    document.getElementById("product-slug").disabled = false;
+  }
+
+  document.getElementById("btn-new-product").addEventListener("click", () => {
+    resetProductForm();
+    fillCategorySelect();
+    productForm.style.display = "grid";
+  });
+  document.getElementById("product-cancel-btn").addEventListener("click", resetProductForm);
+
+  productForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById("product-name").value.trim(),
+      slug: document.getElementById("product-slug").value.trim(),
+      description: document.getElementById("product-description").value.trim() || null,
+      price: parseFloat(document.getElementById("product-price").value),
+      discount_percentage: parseInt(document.getElementById("product-discount").value || "0", 10),
+      stock: parseInt(document.getElementById("product-stock").value, 10),
+      category_id: parseInt(document.getElementById("product-category").value, 10),
+    };
+    try {
+      if (productIdField.value) {
+        await Api.updateProduct(productIdField.value, payload);
+        showMsg("Producto actualizado.", "success");
+      } else {
+        await Api.createProduct(payload);
+        showMsg("Producto creado.", "success");
+      }
+      resetProductForm();
+      await loadProducts();
+    } catch (err) {
+      showMsg(err.message);
+    }
+  });
+
+  async function loadProducts() {
+    const products = await Api.listAllProductsForAdmin();
+    const body = document.getElementById("products-body");
+    body.innerHTML = products
+      .map(
+        (p) => `
+      <tr class="${p.is_active ? "" : "inactive-row"}">
+        <td>${p.name}</td>
+        <td>${p.category.name}</td>
+        <td>${money(p.final_price)}${p.discount_percentage ? ` <span class="badge-discount">-${p.discount_percentage}%</span>` : ""}</td>
+        <td>${p.stock}</td>
+        <td>${p.is_active ? '<span class="badge paid">Activo</span>' : '<span class="badge cancelled">Inactivo</span>'}</td>
+        <td><input type="file" accept="image/png,image/jpeg,image/webp" data-id="${p.id}" class="img-input" style="max-width:140px;" /></td>
+        <td style="white-space:nowrap;">
+          <button class="secondary small" data-edit="${p.id}">Editar</button>
+          ${p.is_active
+            ? `<button class="danger small" data-delete="${p.id}">Borrar</button>`
+            : `<button class="small" data-restore="${p.id}">Reactivar</button>`}
+        </td>
+      </tr>`
+      )
+      .join("");
+
+    body.querySelectorAll("[data-edit]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const p = products.find((x) => x.id === Number(btn.dataset.edit));
+        fillCategorySelect();
+        productIdField.value = p.id;
+        document.getElementById("product-name").value = p.name;
+        document.getElementById("product-slug").value = p.slug;
+        document.getElementById("product-description").value = p.description || "";
+        document.getElementById("product-price").value = p.price;
+        document.getElementById("product-discount").value = p.discount_percentage;
+        document.getElementById("product-stock").value = p.stock;
+        document.getElementById("product-category").value = p.category.id;
+        document.getElementById("product-slug").disabled = true; // el slug no se puede editar (backend no lo admite en el update)
+        productSubmitBtn.textContent = "Guardar cambios";
+        productForm.style.display = "grid";
+        productForm.scrollIntoView({ behavior: "smooth" });
+      })
+    );
+    body.querySelectorAll("[data-delete]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        if (!confirm("¿Borrar este producto? (podés reactivarlo después)")) return;
+        try {
+          await Api.deleteProduct(btn.dataset.delete);
+          await loadProducts();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+    body.querySelectorAll("[data-restore]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        try {
+          await Api.updateProduct(btn.dataset.restore, { is_active: true });
+          await loadProducts();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+    body.querySelectorAll(".img-input").forEach((input) =>
+      input.addEventListener("change", async () => {
+        if (!input.files[0]) return;
+        try {
+          await Api.uploadProductImage(input.dataset.id, input.files[0]);
+          showMsg("Imagen actualizada.", "success");
+          await loadProducts();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+  }
+
+  // ================= CATEGORIAS =================
+  const categoryForm = document.getElementById("category-form");
+  const categoryIdField = document.getElementById("category-id");
+  const categorySubmitBtn = document.getElementById("category-submit-btn");
+
+  function resetCategoryForm() {
+    categoryForm.reset();
+    categoryIdField.value = "";
+    categorySubmitBtn.textContent = "Crear categoría";
+    categoryForm.style.display = "none";
+  }
+
+  document.getElementById("btn-new-category").addEventListener("click", () => {
+    resetCategoryForm();
+    categoryForm.style.display = "grid";
+  });
+  document.getElementById("category-cancel-btn").addEventListener("click", resetCategoryForm);
+
+  categoryForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById("category-name").value.trim(),
+      slug: document.getElementById("category-slug").value.trim(),
+      description: document.getElementById("category-description").value.trim() || null,
+    };
+    try {
+      if (categoryIdField.value) {
+        await Api.updateCategory(categoryIdField.value, payload);
+        showMsg("Categoría actualizada.", "success");
+      } else {
+        await Api.createCategory(payload);
+        showMsg("Categoría creada.", "success");
+      }
+      resetCategoryForm();
+      await loadCategories();
+    } catch (err) {
+      showMsg(err.message);
+    }
+  });
+
+  async function loadCategories() {
+    categories = await Api.listCategories();
+    const body = document.getElementById("categories-body");
+    body.innerHTML = categories
+      .map(
+        (c) => `
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.slug}</td>
+        <td>${c.description || ""}</td>
+        <td style="white-space:nowrap;">
+          <button class="secondary small" data-edit-cat="${c.id}">Editar</button>
+          <button class="danger small" data-delete-cat="${c.id}">Borrar</button>
+        </td>
+      </tr>`
+      )
+      .join("");
+
+    body.querySelectorAll("[data-edit-cat]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const c = categories.find((x) => x.id === Number(btn.dataset.editCat));
+        categoryIdField.value = c.id;
+        document.getElementById("category-name").value = c.name;
+        document.getElementById("category-slug").value = c.slug;
+        document.getElementById("category-description").value = c.description || "";
+        categorySubmitBtn.textContent = "Guardar cambios";
+        categoryForm.style.display = "grid";
+        categoryForm.scrollIntoView({ behavior: "smooth" });
+      })
+    );
+    body.querySelectorAll("[data-delete-cat]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        if (!confirm("¿Borrar esta categoría? Solo se puede si no tiene productos.")) return;
+        try {
+          await Api.deleteCategory(btn.dataset.deleteCat);
+          await loadCategories();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+  }
+
+  // ================= USUARIOS =================
+  async function loadUsers() {
+    const users = await Api.listUsers();
+    const body = document.getElementById("users-body");
+    body.innerHTML = users
+      .map((u) => {
+        const isSelf = me && u.id === me.id;
+        return `
+      <tr>
+        <td>${u.email}</td>
+        <td>${u.full_name}</td>
+        <td>
+          <select class="status-select" data-role="${u.id}" ${isSelf ? "disabled" : ""}>
+            <option value="customer" ${u.role === "customer" ? "selected" : ""}>Cliente</option>
+            <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+          </select>
+        </td>
+        <td>${u.is_active ? '<span class="badge paid">Activo</span>' : '<span class="badge cancelled">Inactivo</span>'}</td>
+        <td>${new Date(u.created_at).toLocaleDateString("es-AR")}</td>
+        <td>
+          <button class="secondary small" data-toggle-active="${u.id}" data-active="${u.is_active}" ${isSelf ? "disabled" : ""}>
+            ${u.is_active ? "Desactivar" : "Activar"}
+          </button>
+        </td>
+      </tr>`;
+      })
+      .join("");
+
+    body.querySelectorAll("[data-role]").forEach((sel) =>
+      sel.addEventListener("change", async () => {
+        try {
+          await Api.updateUser(sel.dataset.role, { role: sel.value });
+          showMsg("Rol actualizado.", "success");
+          await loadUsers();
+        } catch (err) {
+          showMsg(err.message);
+          await loadUsers();
+        }
+      })
+    );
+    body.querySelectorAll("[data-toggle-active]").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        const nowActive = btn.dataset.active === "true";
+        try {
+          await Api.updateUser(btn.dataset.toggleActive, { is_active: !nowActive });
+          await loadUsers();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+  }
+
+  // ================= PEDIDOS =================
+  const STATUS_LABEL = { pending: "Pendiente", paid: "Pagado", shipped: "Enviado", cancelled: "Cancelado" };
+
+  async function loadOrders() {
+    const orders = await Api.listAllOrders();
+    const body = document.getElementById("orders-body");
+    body.innerHTML = orders
+      .map(
+        (o) => `
+      <tr>
+        <td>#${o.id}</td>
+        <td>${o.user.email}</td>
+        <td>${money(o.total_amount)}</td>
+        <td>${new Date(o.created_at).toLocaleDateString("es-AR")}</td>
+        <td><span class="badge ${o.status}">${STATUS_LABEL[o.status]}</span></td>
+        <td>
+          <select class="status-select" data-order="${o.id}">
+            ${Object.keys(STATUS_LABEL)
+              .map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${STATUS_LABEL[s]}</option>`)
+              .join("")}
+          </select>
+        </td>
+      </tr>`
+      )
+      .join("");
+
+    body.querySelectorAll("[data-order]").forEach((sel) =>
+      sel.addEventListener("change", async () => {
+        try {
+          await Api.updateOrderStatus(sel.dataset.order, sel.value);
+          showMsg("Estado del pedido actualizado.", "success");
+          await loadOrders();
+          loadResumen();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      })
+    );
+  }
+
+  // ================= INIT / GUARD =================
+  async function init() {
+    if (!isLoggedIn()) {
+      showAuthRequiredModal("Necesitás iniciar sesión con una cuenta de administrador para acceder al panel.");
+      return;
+    }
+    try {
+      me = await Api.me();
+    } catch (err) {
+      window.location.href = "login.html";
+      return;
+    }
+    if (me.role !== "admin") {
+      accessMsg.innerHTML = `<div class="msg error">Esta sección es solo para administradores.</div>`;
+      return;
+    }
+    content.style.display = "block";
+    await loadCategories();
+    await Promise.all([loadResumen(), loadProducts(), loadUsers(), loadOrders()]);
+  }
+
+  init();
+</script>

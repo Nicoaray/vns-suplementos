@@ -1,0 +1,69 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>Crear cuenta — VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-side">
+        <div class="brand-lockup">VNS <span>Suplementos</span></div>
+        <p class="auth-tagline">Creá tu cuenta y empezá a armar tus pedidos en minutos.</p>
+        <ul class="auth-points">
+          <li><span class="dot"></span> Envíos a todo el país</li>
+          <li><span class="dot"></span> Pago seguro</li>
+          <li><span class="dot"></span> Seguimiento de tus pedidos</li>
+        </ul>
+      </div>
+      <div class="auth-form-side">
+        <h1>Crear cuenta</h1>
+        <p class="subtitle">Registrate para comprar.</p>
+
+        <div id="msg"></div>
+        <form class="stacked" id="register-form">
+          <label for="full_name">Nombre completo</label>
+          <input id="full_name" type="text" required minlength="2" />
+
+          <label for="email">Email</label>
+          <input id="email" type="email" required />
+
+          <label for="password">Contraseña (mínimo 8 caracteres)</label>
+          <input id="password" type="password" required minlength="8" />
+
+          <button type="submit">Crear cuenta</button>
+          <p>¿Ya tenés cuenta? <a href="login.html">Ingresá</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("login");
+  const form = document.getElementById("register-form");
+  const msg = document.getElementById("msg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.innerHTML = "";
+    try {
+      await Api.register({
+        full_name: document.getElementById("full_name").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+      });
+      await Api.login(document.getElementById("email").value, document.getElementById("password").value);
+      window.location.href = "index.html";
+    } catch (err) {
+      msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+    }
+  });
+</script>

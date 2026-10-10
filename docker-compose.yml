@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vns_user
+      POSTGRES_PASSWORD: vns_password
+      POSTGRES_DB: vns_suplementos
+    ports:
+      - "5432:5432"
+    volumes:
+      - vns_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vns_user -d vns_suplementos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://vns_user:vns_password@db:5432/vns_suplementos
+      SECRET_KEY: ${SECRET_KEY:-cambiar-esta-clave-en-produccion}
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      BACKEND_CORS_ORIGINS: "http://localhost:5500,http://127.0.0.1:5500"
+    ports:
+      - "8000:8000"
+
+volumes:
+  vns_db_data:

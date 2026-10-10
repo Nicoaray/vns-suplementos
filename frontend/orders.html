@@ -1,0 +1,60 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>Mis pedidos — VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <h1>Mis pedidos</h1>
+  <div id="msg"></div>
+  <div id="orders-content"></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("pedidos");
+  const content = document.getElementById("orders-content");
+  const msg = document.getElementById("msg");
+
+  async function loadOrders() {
+    if (!isLoggedIn()) {
+      showAuthRequiredModal("Necesitás iniciar sesión para ver tus pedidos.");
+      return;
+    }
+    try {
+      const orders = await Api.myOrders();
+      if (orders.length === 0) {
+        content.innerHTML = `<p>Todavía no hiciste ningún pedido.</p>`;
+        return;
+      }
+      content.innerHTML = orders
+        .map(
+          (o) => `
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>Pedido #${o.id}</strong>
+            <span class="badge ${o.status}">${o.status}</span>
+          </div>
+          <div class="stock">${new Date(o.created_at).toLocaleString("es-AR")}</div>
+          <div>Envío a: ${o.shipping_address}</div>
+          <ul>
+            ${o.items.map((i) => `<li>${i.quantity} x ${i.product.name} — $${Number(i.unit_price).toLocaleString("es-AR")}</li>`).join("")}
+          </ul>
+          <div class="price">Total: $${Number(o.total_amount).toLocaleString("es-AR")}</div>
+        </div>
+      `
+        )
+        .join("");
+    } catch (err) {
+      msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+    }
+  }
+
+  loadOrders();
+</script>

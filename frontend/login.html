@@ -1,0 +1,61 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>Ingresar — VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-side">
+        <div class="brand-lockup">VNS <span>Suplementos</span></div>
+        <p class="auth-tagline">Accedé a tu cuenta para armar tu pedido, hacer seguimiento y aprovechar los descuentos.</p>
+        <ul class="auth-points">
+          <li><span class="dot"></span> Envíos a todo el país</li>
+          <li><span class="dot"></span> Pago seguro</li>
+          <li><span class="dot"></span> Seguimiento de tus pedidos</li>
+        </ul>
+      </div>
+      <div class="auth-form-side">
+        <h1>Ingresar</h1>
+        <p class="subtitle">Accedé a tu cuenta.</p>
+
+        <div id="msg"></div>
+        <form class="stacked" id="login-form">
+          <label for="email">Email</label>
+          <input id="email" type="email" required />
+
+          <label for="password">Contraseña</label>
+          <input id="password" type="password" required minlength="8" />
+
+          <button type="submit">Ingresar</button>
+          <p>¿No tenés cuenta? <a href="register.html">Registrate</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("login");
+  const form = document.getElementById("login-form");
+  const msg = document.getElementById("msg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.innerHTML = "";
+    try {
+      await Api.login(document.getElementById("email").value, document.getElementById("password").value);
+      window.location.href = "index.html";
+    } catch (err) {
+      msg.innerHTML = `<div class="msg error">Email o contraseña incorrectos.</div>`;
+    }
+  });
+</script>

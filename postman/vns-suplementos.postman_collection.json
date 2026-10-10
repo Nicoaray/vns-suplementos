@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "VNS Suplementos",
+    "description": "Coleccion de pruebas para la API de vns-suplementos (FastAPI). Importar junto con el environment 'VNS Suplementos - Local'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@example.com\",\n  \"full_name\": \"Cliente Demo\",\n  \"password\": \"SuperSegura123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) { pm.environment.set('token', data.access_token); }",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "cliente@example.com" },
+                { "key": "password", "value": "SuperSegura123" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) { pm.environment.set('admin_token', data.access_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "admin@vns-suplementos.com" },
+                { "key": "password", "value": "CambiarEsteAdmin123!" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Mi perfil (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Listar categorias",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Crear categoria (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Snacks Fit\",\n  \"slug\": \"snacks-fit\",\n  \"description\": \"Barras y snacks proteicos\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Eliminar categoria (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Listar productos (paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" },
+                { "key": "category_id", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ver producto por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Crear producto (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"BCAA 2:1:1 200g\",\n  \"slug\": \"bcaa-211-200g\",\n  \"description\": \"Aminoacidos ramificados\",\n  \"price\": 15000,\n  \"discount_percentage\": 0,\n  \"stock\": 20,\n  \"category_id\": {{category_id}}\n}"
+            },
+            "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Actualizar producto (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"price\": 16000,\n  \"stock\": 15,\n  \"discount_percentage\": 15\n}" },
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Subir imagen de producto (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}/image",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}", "image"]
+            },
+            "description": "Elegir un archivo JPEG/PNG/WEBP de hasta 5MB en el campo 'file' antes de enviar."
+          }
+        },
+        {
+          "name": "Eliminar producto (admin, baja logica)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Listar reseñas de un producto",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Crear reseña (requiere haber comprado el producto)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excelente producto, llego rapido\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}", "reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Ver mi carrito",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/cart", "host": ["{{base_url}}"], "path": ["cart"] }
+          }
+        },
+        {
+          "name": "Agregar item al carrito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.items && data.items.length) { pm.environment.set('cart_item_id', data.items[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"product_id\": {{product_id}},\n  \"quantity\": 2\n}" },
+            "url": { "raw": "{{base_url}}/cart/items", "host": ["{{base_url}}"], "path": ["cart", "items"] }
+          }
+        },
+        {
+          "name": "Actualizar cantidad de item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 3\n}" },
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Quitar item del carrito",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Crear orden (checkout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) { pm.environment.set('order_id', data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"shipping_address\": \"Calle Falsa 123, Mendoza\"\n}" },
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Ver mis ordenes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] }
+          }
+        },
+        {
+          "name": "Ver todas las ordenes (admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/orders/admin/all", "host": ["{{base_url}}"], "path": ["orders", "admin", "all"] }
+          }
+        },
+        {
+          "name": "Actualizar estado de orden (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"paid\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "status"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

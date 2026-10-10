@@ -1,0 +1,24 @@
+# Entornos virtuales de Python
+backend/.venv/
+**/__pycache__/
+*.pyc
+
+# Variables de entorno reales (nunca subir esto a un repo)
+backend/.env
+.env
+
+# Imagenes de producto subidas por los usuarios (contenido, no codigo)
+backend/media/products/*
+!backend/media/products/.gitkeep
+
+# Archivos temporales de verificacion / empaquetado
+backend_verif.tar.gz
+*.tar.gz
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Postman (si exportan environments con datos sensibles, ajustar)

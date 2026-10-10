@@ -1,0 +1,31 @@
+# Blueprint de Render: crea el backend (Docker) y el frontend (sitio
+# estatico) de una sola vez con "New > Blueprint" apuntando a este repo.
+# La base de datos NO esta aca a proposito: usamos Postgres gratis de
+# Neon (neon.tech), no el de Render (que vence a los 30 dias).
+#
+# Despues de crear el blueprint, Render va a pedir el valor de las
+# variables marcadas con "sync: false" (no se guardan en el repo).
+
+services:
+  - type: web
+    name: vns-suplementos-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DATABASE_URL
+        sync: false # pegar aca la cadena de conexion que te da Neon
+      - key: SECRET_KEY
+        generateValue: true # Render genera una clave segura sola
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: ENVIRONMENT
+        value: production
+      - key: BACKEND_CORS_ORIGINS
+        sync: false # pegar la URL del frontend una vez que Render la asigne
+
+  - type: web
+    name: vns-suplementos-frontend
+    runtime: static
+    staticPublishPath: ./frontend

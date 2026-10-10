@@ -1,0 +1,119 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>Carrito — VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <h1>Tu carrito</h1>
+  <div id="msg"></div>
+  <div id="cart-content"></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("carrito");
+  const content = document.getElementById("cart-content");
+  const msg = document.getElementById("msg");
+
+  function showMsg(text, type = "error") {
+    msg.innerHTML = text ? `<div class="msg ${type}">${text}</div>` : "";
+  }
+
+  async function loadCart() {
+    if (!isLoggedIn()) {
+      showAuthRequiredModal("Necesitás iniciar sesión para ver tu carrito.");
+      return;
+    }
+    try {
+      const cart = await Api.getCart();
+      renderCart(cart);
+    } catch (err) {
+      showMsg(err.message);
+    }
+  }
+
+  function renderCart(cart) {
+    if (cart.items.length === 0) {
+      content.innerHTML = `<p>Tu carrito está vacío. <a href="index.html">Ver catálogo</a></p>`;
+      return;
+    }
+
+    let total = 0;
+    const rows = cart.items
+      .map((item) => {
+        const subtotal = item.quantity * Number(item.product.price);
+        total += subtotal;
+        return `
+        <tr>
+          <td>${item.product.name}</td>
+          <td>$${Number(item.product.price).toLocaleString("es-AR")}</td>
+          <td>
+            <input class="qty-input" type="number" min="1" max="${item.product.stock}" value="${item.quantity}" data-item="${item.id}" />
+          </td>
+          <td>$${subtotal.toLocaleString("es-AR")}</td>
+          <td><button class="danger" data-remove="${item.id}">Quitar</button></td>
+        </tr>`;
+      })
+      .join("");
+
+    content.innerHTML = `
+      <table>
+        <thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="summary">
+        <div>Total</div>
+        <div class="total">$${total.toLocaleString("es-AR")}</div>
+        <label for="shipping_address">Dirección de envío</label>
+        <input id="shipping_address" type="text" placeholder="Calle, número, ciudad" style="width:100%; margin-bottom:12px;" />
+        <button id="checkout-btn">Confirmar pedido</button>
+      </div>
+    `;
+
+    content.querySelectorAll("[data-item]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        try {
+          await Api.updateCartItem(input.dataset.item, Number(input.value));
+          loadCart();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      });
+    });
+
+    content.querySelectorAll("[data-remove]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await Api.removeCartItem(btn.dataset.remove);
+          loadCart();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      });
+    });
+
+    document.getElementById("checkout-btn").addEventListener("click", async () => {
+      const address = document.getElementById("shipping_address").value.trim();
+      if (!address) {
+        showMsg("Ingresá una dirección de envío.");
+        return;
+      }
+      try {
+        await Api.createOrder(address);
+        showMsg("¡Pedido confirmado!", "success");
+        setTimeout(() => (window.location.href = "orders.html"), 800);
+      } catch (err) {
+        showMsg(err.message);
+      }
+    });
+  }
+
+  loadCart();
+</script>

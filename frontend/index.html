@@ -1,0 +1,309 @@
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<title>VNS Suplementos</title>
+<link rel="stylesheet" href="css/styles.css" />
+
+<header class="site-header">
+  <a class="brand" href="index.html">VNS <span>Suplementos</span></a>
+  <nav class="site-nav" id="site-nav"></nav>
+</header>
+
+<main>
+  <section class="hero">
+    <span class="hero-eyebrow">✦ Suplementación de alto rendimiento</span>
+    <h1>Llevá tu entrenamiento<br />al <span class="accent">siguiente nivel</span></h1>
+    <p class="hero-subtitle">
+      Proteínas, creatinas y pre-entrenos con fórmulas premium. Envío en 24-48hs, pago seguro
+      y resultados respaldados por ciencia.
+    </p>
+    <div class="hero-actions">
+      <button id="hero-cta-catalog">Comprar ahora →</button>
+      <button class="secondary" id="hero-cta-categories">Ver categorías</button>
+    </div>
+  </section>
+
+  <div class="trust-strip">
+    <span class="trust-item">⭐ <strong>Calidad</strong> verificada</span>
+    <span class="trust-item">🚚 Envío <strong>24-48hs</strong></span>
+    <span class="trust-item">🔒 Pago <strong>100% seguro</strong></span>
+    <span class="trust-item">↩️ Cambios <strong>sin costo</strong></span>
+  </div>
+
+  <section class="home-section" id="featured-section" style="display:none;">
+    <p class="section-eyebrow">Explorá</p>
+    <div class="section-head"><h2>Categorías destacadas</h2></div>
+    <div class="featured-split">
+      <div class="spotlight-card" id="spotlight-card"></div>
+      <div class="mini-grid">
+        <div class="mini-card">
+          <strong>Cómo comprar</strong>
+          <ol>
+            <li>Elegí tu producto</li>
+            <li>Pagá de forma segura</li>
+            <li>Recibí en 24-48hs</li>
+          </ol>
+        </div>
+        <div class="mini-card">
+          <strong>Envío y pagos</strong>
+          Envío a todo el país. Pago seguro con tarjeta.
+        </div>
+        <div class="mini-card contact">
+          <span>💬 <strong style="display:inline">¿Dudas?</strong> Escribinos</span>
+          <button class="secondary small" id="contact-btn">Consultar ahora</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-section" id="carousel-featured-wrap" style="display:none;">
+    <div class="section-head">
+      <div><p class="section-eyebrow">Más vendidos</p><h2>Destacados</h2></div>
+    </div>
+    <div class="carousel-wrap"><div class="carousel-track" id="carousel-featured"></div></div>
+  </section>
+
+  <section class="home-section" id="carousel-new-wrap" style="display:none;">
+    <div class="section-head">
+      <div><p class="section-eyebrow">Recién llegados</p><h2>Nuevos ingresos</h2></div>
+    </div>
+    <div class="carousel-wrap"><div class="carousel-track" id="carousel-new"></div></div>
+  </section>
+
+  <section class="home-section" id="carousel-sale-wrap" style="display:none;">
+    <div class="section-head">
+      <div><p class="section-eyebrow">Ofertas</p><h2>Con descuento</h2></div>
+    </div>
+    <div class="carousel-wrap"><div class="carousel-track" id="carousel-sale"></div></div>
+  </section>
+
+  <section class="home-section" id="catalog-section">
+    <p class="section-eyebrow">Catálogo</p>
+    <h2>Suplementos para tu entrenamiento</h2>
+    <p class="subtitle">Fórmulas premium seleccionadas por nutricionistas deportivos.</p>
+
+    <div class="filters">
+      <select id="category-filter">
+        <option value="">Todas las categorías</option>
+      </select>
+      <input id="search-input" type="text" placeholder="Buscar producto..." />
+    </div>
+
+    <div id="msg"></div>
+    <div class="grid" id="product-grid"></div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+</main>
+
+<footer>VNS Suplementos — proyecto de práctica / plantilla de ecommerce.</footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("catalogo");
+
+  const grid = document.getElementById("product-grid");
+  const pagination = document.getElementById("pagination");
+  const msg = document.getElementById("msg");
+  const categoryFilter = document.getElementById("category-filter");
+  const searchInput = document.getElementById("search-input");
+
+  let currentPage = 1;
+  const PAGE_SIZE = 12;
+
+  function showMsg(text, type = "error") {
+    msg.innerHTML = text ? `<div class="msg ${type}">${text}</div>` : "";
+  }
+
+  function starsHtml(avg) {
+    if (avg === null || avg === undefined) return "";
+    const full = Math.round(avg);
+    return `<div class="stars" title="${avg} / 5">${"★".repeat(full)}${"☆".repeat(5 - full)}</div>`;
+  }
+
+  function priceHtml(p) {
+    if (p.discount_percentage > 0) {
+      return `
+        <div class="price-row">
+          <span class="price-old">$${Number(p.price).toLocaleString("es-AR")}</span>
+          <span class="badge-discount">-${p.discount_percentage}%</span>
+        </div>
+        <div class="price">$${Number(p.final_price).toLocaleString("es-AR")}</div>
+      `;
+    }
+    return `<div class="price">$${Number(p.price).toLocaleString("es-AR")}</div>`;
+  }
+
+  function productCardHtml(p) {
+    return `
+      <span class="category-tag">${p.category.name}</span>
+      ${p.image_url ? `<img class="card-img" src="${API_BASE_URL}${p.image_url}" alt="${p.name}" />` : `<div class="card-img"></div>`}
+      <h3>${p.name}</h3>
+      ${starsHtml(p.average_rating)}
+      <p class="desc">${p.description || ""}</p>
+      ${priceHtml(p)}
+      <div class="stock">Stock: ${p.stock}</div>
+      <button ${p.stock === 0 ? "disabled" : ""} data-id="${p.id}">Agregar</button>
+    `;
+  }
+
+  function buildCard(p) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = productCardHtml(p);
+    card.querySelector("button").addEventListener("click", () => addToCart(p.id));
+    return card;
+  }
+
+  function renderProducts(products) {
+    grid.innerHTML = "";
+    if (products.length === 0) {
+      grid.innerHTML = "<p>No se encontraron productos.</p>";
+      return;
+    }
+    products.forEach((p) => grid.appendChild(buildCard(p)));
+  }
+
+  function renderPagination(data) {
+    pagination.innerHTML = "";
+    if (data.total_pages <= 1) return;
+    const prev = document.createElement("button");
+    prev.textContent = "← Anterior";
+    prev.className = "secondary";
+    prev.disabled = data.page <= 1;
+    prev.addEventListener("click", () => {
+      currentPage -= 1;
+      loadProducts();
+    });
+
+    const info = document.createElement("span");
+    info.textContent = ` Página ${data.page} de ${data.total_pages} (${data.total} productos) `;
+
+    const next = document.createElement("button");
+    next.textContent = "Siguiente →";
+    next.className = "secondary";
+    next.disabled = data.page >= data.total_pages;
+    next.addEventListener("click", () => {
+      currentPage += 1;
+      loadProducts();
+    });
+
+    pagination.append(prev, info, next);
+  }
+
+  async function addToCart(productId) {
+    if (!isLoggedIn()) {
+      showAuthRequiredModal("Necesitás iniciar sesión para agregar productos al carrito.");
+      return;
+    }
+    try {
+      await Api.addToCart(productId, 1);
+      showMsg("Producto agregado al carrito.", "success");
+    } catch (err) {
+      showMsg(err.message);
+    }
+  }
+
+  async function loadCategories() {
+    try {
+      const categories = await Api.listCategories();
+      categories.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.name;
+        categoryFilter.appendChild(opt);
+      });
+    } catch (err) {
+      showMsg(err.message);
+    }
+  }
+
+  async function loadProducts() {
+    try {
+      const params = { page: currentPage, page_size: PAGE_SIZE };
+      if (categoryFilter.value) params.category_id = categoryFilter.value;
+      if (searchInput.value.trim()) params.search = searchInput.value.trim();
+      const data = await Api.listProducts(params);
+      renderProducts(data.items);
+      renderPagination(data);
+    } catch (err) {
+      showMsg(err.message);
+    }
+  }
+
+  categoryFilter.addEventListener("change", () => {
+    currentPage = 1;
+    loadProducts();
+  });
+  let searchTimer;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      currentPage = 1;
+      loadProducts();
+    }, 300);
+  });
+
+  // --- Home: destacado, carruseles ---
+
+  function fillCarousel(trackId, wrapId, products) {
+    const track = document.getElementById(trackId);
+    const wrap = document.getElementById(wrapId);
+    if (!products.length) return; // la seccion queda oculta (display:none por defecto)
+    track.innerHTML = "";
+    products.forEach((p) => track.appendChild(buildCard(p)));
+    wrap.style.display = "";
+  }
+
+  async function loadSpotlight() {
+    try {
+      const [best] = await Api.listFeatured(1);
+      if (!best) return;
+      const spotlight = document.getElementById("spotlight-card");
+      spotlight.innerHTML = `
+        ${best.image_url ? `<img class="spotlight-img" src="${API_BASE_URL}${best.image_url}" alt="${best.name}" />` : `<div class="spotlight-img"></div>`}
+        <div class="spotlight-body">
+          <span class="category-tag">${best.category.name} · Más vendido</span>
+          <h3 style="margin:6px 0;">${best.name}</h3>
+          <p class="desc" style="margin:0 0 10px;">${best.description || ""}</p>
+          ${priceHtml(best)}
+          <div style="margin-top:10px;"><a class="spotlight-link" href="#catalog-section">Ver producto →</a></div>
+        </div>
+      `;
+      document.getElementById("featured-section").style.display = "";
+    } catch (err) {
+      /* si falla, simplemente no se muestra la seccion */
+    }
+  }
+
+  async function loadHomeCarousels() {
+    try {
+      const featured = await Api.listFeatured(10);
+      fillCarousel("carousel-featured", "carousel-featured-wrap", featured);
+    } catch (_) {}
+    try {
+      const fresh = await Api.listNewArrivals(10);
+      fillCarousel("carousel-new", "carousel-new-wrap", fresh);
+    } catch (_) {}
+    try {
+      const onSale = await Api.listOnSale(10);
+      fillCarousel("carousel-sale", "carousel-sale-wrap", onSale);
+    } catch (_) {}
+  }
+
+  document.getElementById("hero-cta-catalog").addEventListener("click", () => {
+    document.getElementById("catalog-section").scrollIntoView({ behavior: "smooth" });
+  });
+  document.getElementById("hero-cta-categories").addEventListener("click", () => {
+    document.getElementById("featured-section").scrollIntoView({ behavior: "smooth" });
+  });
+  document.getElementById("contact-btn").addEventListener("click", () => {
+    showMsg("Escribinos a contacto@vns-suplementos.com — te respondemos a la brevedad.", "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  loadCategories();
+  loadProducts();
+  loadSpotlight();
+  loadHomeCarousels();
+</script>
